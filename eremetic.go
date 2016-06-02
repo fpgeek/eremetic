@@ -25,6 +25,7 @@ func readConfig() {
 	viper.SetDefault("user", "root")
 	viper.SetDefault("loglevel", "debug")
 	viper.SetDefault("logformat", "text")
+	viper.SetDefault("database_driver", "boltdb")
 	viper.SetDefault("database", "db/eremetic.db")
 	viper.SetDefault("checkpoint", "true")
 	viper.SetDefault("failover_timeout", 2592000.0)
@@ -67,6 +68,18 @@ func getSchedulerSettings() *scheduler.Settings {
 	}
 }
 
+func setupDB() database.TaskDB {
+	db, err := database.NewDB(
+		viper.GetString("database_driver"),
+		viper.GetString("database"),
+	)
+	if err != nil {
+		logrus.WithError(err).Fatal("Unable to set up database.")
+	}
+
+	return db
+}
+
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "--version" {
 		fmt.Println(Version)
@@ -75,12 +88,15 @@ func main() {
 	readConfig()
 	setupLogging()
 	setupMetrics()
-	defer database.Close()
+	db := setupDB()
+
+	schedulerSettings := getSchedulerSettings()
+
+	defer db.Close()
 
 	bind := fmt.Sprintf("%s:%d", viper.GetString("address"), viper.GetInt("port"))
 
-	schedulerSettings := getSchedulerSettings()
-	sched := scheduler.Create(schedulerSettings)
+	sched := scheduler.Create(schedulerSettings, db)
 	go func() {
 		scheduler.Run(sched, schedulerSettings)
 		manners.Close()
@@ -99,13 +115,12 @@ func main() {
 		sched.Stop()
 	}()
 
-	router := routes.Create(sched)
+	router := routes.Create(sched, db)
 	logrus.WithFields(logrus.Fields{
 		"address": viper.GetString("address"),
 		"port":    viper.GetInt("port"),
 	}).Infof("listening to %s", bind)
 	err := manners.ListenAndServe(bind, router)
-	database.Close()
 
 	if err != nil {
 		logrus.WithError(err).Fatal("Unrecoverable error")
