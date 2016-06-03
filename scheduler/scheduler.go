@@ -55,6 +55,7 @@ type Settings struct {
 	FailoverTimeout  float64
 }
 
+// Create creates a scheduler
 func Create(settings *Settings) *eremeticScheduler {
 	return &eremeticScheduler{
 		shutdown: make(chan struct{}),

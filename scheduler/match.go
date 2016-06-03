@@ -39,6 +39,24 @@ func (m *resourceMatcher) Description() string {
 	return fmt.Sprintf("%f of scalar resource %s", m.value, m.name)
 }
 
+type constraintsMatcher struct {
+	constraints []types.Constraint
+}
+
+func (m *constraintsMatcher) Matches(o interface{}) error {
+	offer := o.(*mesos.Offer)
+	err := errors.New("")
+
+	if checkConstraints(offer, m.constraints) {
+		return nil
+	}
+	return err
+}
+
+func (m *constraintsMatcher) Description() string {
+	return fmt.Sprintf("constraints %s", m.constraints)
+}
+
 func CPUAvailable(v float64) ogle.Matcher {
 	return &resourceMatcher{"cpus", v}
 }
@@ -47,10 +65,15 @@ func MemoryAvailable(v float64) ogle.Matcher {
 	return &resourceMatcher{"mem", v}
 }
 
+func ConstraintAvailable(constraints []types.Constraint) ogle.Matcher {
+	return &constraintsMatcher{constraints}
+}
+
 func createMatcher(task types.EremeticTask) ogle.Matcher {
 	return ogle.AllOf(
 		CPUAvailable(task.TaskCPUs),
-		MemoryAvailable(task.TaskMem))
+		MemoryAvailable(task.TaskMem),
+		ConstraintAvailable(task.Constraints))
 }
 
 func matches(matcher ogle.Matcher, o interface{}) bool {

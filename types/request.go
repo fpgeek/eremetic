@@ -18,4 +18,5 @@ type Request struct {
 	MaskedEnvironment map[string]string `json:"masked_env"`
 	CallbackURI       string            `json:"callback_uri"`
 	URIs              []string          `json:"uris"`
+	Constraints       []Constraint      `json:"constraints"`
 }

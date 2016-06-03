@@ -52,7 +52,7 @@ func getCredential(settings *Settings) (*mesos.Credential, error) {
 		logrus.WithField("principal", fields[0]).Info("Successfully loaded principal")
 		return &mesos.Credential{
 			Principal: proto.String(fields[0]),
-			Secret:    proto.String(fields[1]),
+			Secret:    []byte(*proto.String(fields[1])),
 		}, nil
 	}
 	logrus.Debug("No credentials specified in configuration")

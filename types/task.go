@@ -13,6 +13,8 @@ type Status struct {
 	Status string `json:"status"`
 }
 
+type Constraint []string
+
 type EremeticTask struct {
 	TaskCPUs          float64           `json:"task_cpus"`
 	TaskMem           float64           `json:"task_mem"`
@@ -31,6 +33,7 @@ type EremeticTask struct {
 	Retry             int               `json:"retry"`
 	CallbackURI       string            `json:"callback_uri"`
 	URIs              []string          `json:"uris"`
+	Constraints       []Constraint      `json:"constraints"`
 }
 
 func NewEremeticTask(request Request, name string) (EremeticTask, error) {
@@ -62,6 +65,7 @@ func NewEremeticTask(request Request, name string) (EremeticTask, error) {
 		Volumes:           request.Volumes,
 		CallbackURI:       request.CallbackURI,
 		URIs:              request.URIs,
+		Constraints:       request.Constraints,
 	}
 	return task, nil
 }
